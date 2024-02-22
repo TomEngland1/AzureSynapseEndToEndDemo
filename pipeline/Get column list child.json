@@ -1,0 +1,380 @@
+{
+	"name": "Get column list child",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Metadata1",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Binary1",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": {
+								"value": "@pipeline().parameters.Container",
+								"type": "Expression"
+							},
+							"directory": {
+								"value": "@pipeline().parameters.Directory",
+								"type": "Expression"
+							},
+							"filename": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Filter1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Filter1').output.Value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Switch1",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@pipeline().parameters.PayloadFileType",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "csv",
+										"activities": [
+											{
+												"name": "Get Metadata2",
+												"type": "GetMetadata",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DelimitedText1",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"directory": {
+																"value": "@pipeline().parameters.Directory",
+																"type": "Expression"
+															},
+															"filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"fieldList": [
+														"structure"
+													],
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"enablePartitionDiscovery": false
+													},
+													"formatSettings": {
+														"type": "DelimitedTextReadSettings"
+													}
+												}
+											},
+											{
+												"name": "SQL pool stored procedure1",
+												"type": "SqlPoolStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Get Metadata2",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"sqlPool": {
+													"referenceName": "scdpocws1p1",
+													"type": "SqlPoolReference"
+												},
+												"typeProperties": {
+													"storedProcedureName": "mgmt.usp_InsertFileStructure",
+													"storedProcedureParameters": {
+														"PayloadID": {
+															"value": {
+																"value": "@int(pipeline().parameters.PayloadID)",
+																"type": "Expression"
+															},
+															"type": "String"
+														},
+														"Filename": {
+															"value": {
+																"value": "@item().name",
+																"type": "Expression"
+															},
+															"type": "String"
+														},
+														"RawID": {
+															"value": {
+																"value": "@int(pipeline().parameters.RawFileLogID)",
+																"type": "Expression"
+															},
+															"type": "Int32"
+														},
+														"ColumnList": {
+															"value": {
+																"value": "@string(activity('Get Metadata2').output.structure)",
+																"type": "Expression"
+															},
+															"type": "String"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "parquet",
+										"activities": [
+											{
+												"name": "Get Metadata3",
+												"type": "GetMetadata",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "Parquet1",
+														"type": "DatasetReference",
+														"parameters": {
+															"Container": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"Directory": {
+																"value": "@pipeline().parameters.Directory",
+																"type": "Expression"
+															},
+															"Filename": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"fieldList": [
+														"structure"
+													],
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"enablePartitionDiscovery": false
+													},
+													"formatSettings": {
+														"type": "ParquetReadSettings"
+													}
+												}
+											},
+											{
+												"name": "SQL pool stored procedure1_copy1",
+												"type": "SqlPoolStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Get Metadata3",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"sqlPool": {
+													"referenceName": "scdpocws1p1",
+													"type": "SqlPoolReference"
+												},
+												"typeProperties": {
+													"storedProcedureName": "mgmt.usp_InsertFileStructure",
+													"storedProcedureParameters": {
+														"PayloadID": {
+															"value": {
+																"value": "@int(pipeline().parameters.PayloadID)",
+																"type": "Expression"
+															},
+															"type": "String"
+														},
+														"Filename": {
+															"value": {
+																"value": "@item().name",
+																"type": "Expression"
+															},
+															"type": "String"
+														},
+														"RawID": {
+															"value": {
+																"value": "@int(pipeline().parameters.RawFileLogID)",
+																"type": "Expression"
+															},
+															"type": "Int32"
+														},
+														"ColumnList": {
+															"value": {
+																"value": "@string(activity('Get Metadata3').output.structure)",
+																"type": "Expression"
+															},
+															"type": "String"
+														}
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Filter1",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata1').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@contains(item().name,concat('.',pipeline().parameters.PayloadFileType))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "SQL pool stored procedure2",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "scdpocws1p1",
+					"type": "SqlPoolReference"
+				},
+				"typeProperties": {
+					"storedProcedureName": "[mgmt].[usp_AddTableMetadata]",
+					"storedProcedureParameters": {
+						"PayloadID": {
+							"value": {
+								"value": "@pipeline().parameters.PayloadID",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"Container": {
+				"type": "string"
+			},
+			"Directory": {
+				"type": "string"
+			},
+			"RawFileLogID": {
+				"type": "string"
+			},
+			"PayloadID": {
+				"type": "string"
+			},
+			"PayloadFileType": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Get Metadata"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-22T13:02:38Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}
