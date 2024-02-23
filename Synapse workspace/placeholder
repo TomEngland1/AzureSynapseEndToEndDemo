@@ -1,0 +1,55 @@
+{
+    "properties": {
+        "defaultDataLakeStorage": {
+            "createManagedPrivateEndpoint": false,
+            "accountUrl": "https://dlsscdpoc.dfs.core.windows.net/",
+            "filesystem": "dlsscdpocfs1"
+        },
+        "encryption": {
+            "doubleEncryptionEnabled": false
+        },
+        "provisioningState": "Succeeded",
+        "managedVirtualNetwork": "default",
+        "connectivityEndpoints": {
+            "web": "https://web.azuresynapse.net?workspace=%2fsubscriptions%2f8c446569-e418-4625-9c82-5fe80d7a0993%2fresourceGroups%2frg-synapse-uks%2fproviders%2fMicrosoft.Synapse%2fworkspaces%2fscdpocws1",
+            "dev": "https://scdpocws1.dev.azuresynapse.net",
+            "sqlOnDemand": "scdpocws1-ondemand.sql.azuresynapse.net",
+            "sql": "scdpocws1.sql.azuresynapse.net"
+        },
+        "managedResourceGroupName": "synapseworkspace-managedrg-88adc441-189f-412d-8a28-04283013ea8b",
+        "sqlAdministratorLogin": "sqladminuser",
+        "privateEndpointConnections": [],
+        "workspaceUID": "98f23d34-6f2b-462a-a430-3045906dc5d5",
+        "extraProperties": {
+            "WorkspaceType": "Normal",
+            "IsScopeEnabled": false
+        },
+        "managedVirtualNetworkSettings": {
+            "preventDataExfiltration": false
+        },
+        "workspaceRepositoryConfiguration": {
+            "accountName": "ShapingCloud-DevOps",
+            "collaborationBranch": "main",
+            "lastCommitId": "",
+            "projectName": "Data Engineering",
+            "repositoryName": "Synapse Metadata Engine",
+            "rootFolder": "/",
+            "tenantId": "6a82c96f-c9fb-42d4-b0e2-5882395ad22b",
+            "type": "WorkspaceVSTSConfiguration"
+        },
+        "publicNetworkAccess": "Enabled",
+        "cspWorkspaceAdminProperties": {
+            "initialWorkspaceAdminObjectId": "2b0207e2-8ce1-4c2a-bcbc-294b7aaddfd1"
+        },
+        "trustedServiceBypassEnabled": false
+    },
+    "type": "Microsoft.Synapse/workspaces",
+    "id": "/subscriptions/8c446569-e418-4625-9c82-5fe80d7a0993/resourceGroups/rg-synapse-uks/providers/Microsoft.Synapse/workspaces/scdpocws1",
+    "location": "uksouth",
+    "name": "scdpocws1",
+    "identity": {
+        "type": "SystemAssigned",
+        "tenantId": "a72855c2-6737-4de4-832a-063d6e070bad",
+        "principalId": "8bd3a709-deb8-4f0f-a917-811c5f46c457"
+    }
+}
