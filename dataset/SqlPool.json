@@ -23,7 +23,7 @@
 			}
 		},
 		"sqlPool": {
-			"referenceName": "scdpocws1p1",
+			"referenceName": "synapsedemodw",
 			"type": "SqlPoolReference"
 		}
 	},
