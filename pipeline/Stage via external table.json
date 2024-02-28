@@ -124,6 +124,10 @@
 								"secureInput": false
 							},
 							"userProperties": [],
+							"sqlPool": {
+								"referenceName": "synapsedemodw",
+								"type": "SqlPoolReference"
+							},
 							"typeProperties": {
 								"storedProcedureName": "mgmt.usp_StageFromExternalTable",
 								"storedProcedureParameters": {
