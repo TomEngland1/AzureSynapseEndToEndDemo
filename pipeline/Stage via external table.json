@@ -149,7 +149,7 @@
 							}
 						},
 						{
-							"name": "SQL pool stored procedure1_copy1",
+							"name": "SQL pool stored procedure_x",
 							"type": "SqlPoolStoredProcedure",
 							"dependsOn": [
 								{
