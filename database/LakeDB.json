@@ -16,7 +16,10 @@
 				"FormatType": "csv",
 				"LinkedServiceName": "AzureDataLakeStorage1"
 			}
-		}
+		},
+		"PublishStatus": "PUBLISHED",
+		"ObjectVersion": 1,
+		"ObjectId": "f5a3559b-6b9b-42bd-8f28-2fde86d0a488"
 	},
 	"type": "DATABASE"
 }

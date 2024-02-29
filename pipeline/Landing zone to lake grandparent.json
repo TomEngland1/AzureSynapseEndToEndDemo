@@ -119,7 +119,7 @@
 			"name": "Landing zone to data lake"
 		},
 		"annotations": [],
-		"lastPublishTime": "2024-02-22T13:03:03Z"
+		"lastPublishTime": "2024-02-29T16:57:38Z"
 	},
 	"type": "Microsoft.Synapse/workspaces/pipelines"
 }
