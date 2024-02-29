@@ -1,0 +1,145 @@
+{
+	"name": "python_Import csv files to lake",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "test",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "94f9fe10-eaf4-4a04-b94b-7cc00a65a4e7"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/8c446569-e418-4625-9c82-5fe80d7a0993/resourceGroups/rg-synapse-demo-uks/providers/Microsoft.Synapse/workspaces/ws-synapse-demo-uks/bigDataPools/test",
+				"name": "test",
+				"type": "Spark",
+				"endpoint": "https://ws-synapse-demo-uks.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/test",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import com.microsoft.spark.sqlanalytics\r\n",
+					"from com.microsoft.spark.sqlanalytics.Constants import Constants"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"container_name = \"dlsscdpocfs1\"\r\n",
+					"storage_account = \"dlsscdpoc\"\r\n",
+					"lake_path = \"raw/hes_op/2024/01/22/17/19\"\r\n",
+					"sql_server = \"scdpocws1\"\r\n",
+					"sql_pool = \"scdpocws1p1\"\r\n",
+					"schema = 'dbo'\r\n",
+					"staging_table = \"spark_rawhes_op202401221719\"\r\n",
+					"file_type = 'parquet'"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"if file_type == 'csv':\r\n",
+					"    df= spark.read.load(f\"abfss://{container_name}@{storage_account}.dfs.core.windows.net/{lake_path}/*.csv\", format='csv', header=True)\r\n",
+					"elif file_type == 'parquet':\r\n",
+					"    df= spark.read.load(f\"abfss://{container_name}@{storage_account}.dfs.core.windows.net/{lake_path}/*.parquet\", format='parquet', header=True)\r\n",
+					"#df.show(10)"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Configure and submit the request to write to Synapse Dedicated SQL Pool\r\n",
+					"# Sample below is using AAD-based authentication approach; See further examples to leverage SQL Basic auth.\r\n",
+					"(df.write\r\n",
+					" # If `Constants.SERVER` is not provided, the `<database_name>` from the three-part table name argument\r\n",
+					" # to `synapsesql` method is used to infer the Synapse Dedicated SQL End Point.\r\n",
+					" .option(Constants.SERVER, f\"{sql_server}.sql.azuresynapse.net\")\r\n",
+					" # Like-wise, if `Constants.TEMP_FOLDER` is not provided, the connector will use the runtime staging directory config (see section on Configuration Options for details).\r\n",
+					" .option(Constants.TEMP_FOLDER, f\"abfss://{container_name}@{storage_account}.dfs.core.windows.net/spark_temp\")\r\n",
+					" # Choose a save mode that is apt for your use case.\r\n",
+					" # Options for save modes are \"error\" or \"errorifexists\" (default), \"overwrite\", \"append\", \"ignore\".\r\n",
+					" # refer to https://spark.apache.org/docs/latest/sql-data-sources-load-save-functions.html#save-modes\r\n",
+					" .mode(\"errorifexists\")\r\n",
+					" # Required parameter - Three-part table name to which data will be written\r\n",
+					" .synapsesql(f\"{sql_pool}.{schema}.{staging_table}\"))\r\n",
+					""
+				],
+				"execution_count": 6
+			}
+		]
+	}
+}

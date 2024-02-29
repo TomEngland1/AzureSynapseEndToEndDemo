@@ -1,0 +1,268 @@
+{
+	"name": "Landing zone to lake parent",
+	"properties": {
+		"activities": [
+			{
+				"name": "Script1",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "scdpocws1-WorkspaceDefaultSqlServer",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"DBName": "master"
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "select FORMAT(getdate(),'yyyy/MM/dd/HH/mm') as LakePath"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Get Metadata1",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Binary1",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": {
+								"value": "@pipeline().parameters.Container",
+								"type": "Expression"
+							},
+							"directory": {
+								"value": "@pipeline().parameters.LandingZone",
+								"type": "Expression"
+							},
+							"filename": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"state": "Active",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Filter1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Filter1').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Landing zone to lake child",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"LakePath": {
+										"value": "@activity('Script1').output.resultSets[0].rows[0].LakePath",
+										"type": "Expression"
+									},
+									"DatasetName": {
+										"value": "@pipeline().parameters.DatasetName",
+										"type": "Expression"
+									},
+									"ZipFilename": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"LakeFolder": {
+										"value": "@pipeline().parameters.LakeFolder",
+										"type": "Expression"
+									},
+									"LandingZone": {
+										"value": "@pipeline().parameters.LandingZone",
+										"type": "Expression"
+									},
+									"Container": {
+										"value": "@pipeline().parameters.Container",
+										"type": "Expression"
+									},
+									"PayloadID": {
+										"value": "@pipeline().parameters.PayloadID",
+										"type": "Expression"
+									},
+									"PayloadFileType": {
+										"value": "@pipeline().parameters.PayloadFileType",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Delete1",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "Execute Pipeline1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "Binary1",
+									"type": "DatasetReference",
+									"parameters": {
+										"container": {
+											"value": "@pipeline().parameters.Container",
+											"type": "Expression"
+										},
+										"directory": {
+											"value": "@pipeline().parameters.LandingZone",
+											"type": "Expression"
+										},
+										"filename": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "AzureDataLakeStorage1",
+										"type": "LinkedServiceReference"
+									},
+									"path": "logs"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Filter1",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Script1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Get Metadata1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata1').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@contains(item().Name,pipeline().parameters.DatasetName)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"DatasetName": {
+				"type": "string",
+				"defaultValue": "ae"
+			},
+			"LakeFolder": {
+				"type": "string",
+				"defaultValue": "raw"
+			},
+			"LandingZone": {
+				"type": "string",
+				"defaultValue": "landing-zone"
+			},
+			"Container": {
+				"type": "string",
+				"defaultValue": "dlsscdpocfs1"
+			},
+			"PayloadID": {
+				"type": "string"
+			},
+			"PayloadFileType": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"test": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Landing zone to data lake"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-29T16:57:34Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}
