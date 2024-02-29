@@ -70,7 +70,7 @@
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "SQL pool stored procedure1",
+							"name": "SQL pool stored procedure",
 							"type": "SqlPoolStoredProcedure",
 							"dependsOn": [],
 							"policy": {
@@ -110,7 +110,7 @@
 							"type": "SqlPoolStoredProcedure",
 							"dependsOn": [
 								{
-									"activity": "SQL pool stored procedure1",
+									"activity": "SQL pool stored procedure",
 									"dependencyConditions": [
 										"Succeeded"
 									]
