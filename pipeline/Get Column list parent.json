@@ -1,0 +1,110 @@
+{
+	"name": "Get Column list parent",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"state": "Active",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlPoolSource",
+						"sqlReaderStoredProcedureName": "mgmt.usp_GetRawFiles",
+						"storedProcedureParameters": {
+							"ETLStatus": {
+								"value": "0"
+							},
+							"MetadataLoaded": {
+								"value": {
+									"value": "@coalesce(false)",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "SqlPool",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach2",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Get column list child",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"Container": {
+				"type": "string",
+				"defaultValue": "dlsscdpocfs1"
+			},
+			"StorageAccount": {
+				"type": "string",
+				"defaultValue": "dlsscdpoc"
+			},
+			"Server": {
+				"type": "string",
+				"defaultValue": "scdpocws1"
+			}
+		},
+		"folder": {
+			"name": "Get Metadata"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-29T16:57:31Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}
