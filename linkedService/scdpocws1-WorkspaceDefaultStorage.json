@@ -1,15 +1,20 @@
 {
 	"name": "scdpocws1-WorkspaceDefaultStorage",
-	"type": "Microsoft.Synapse/workspaces/linkedservices",
 	"properties": {
-		"typeProperties": {
-			"url": "https://dlsscdpoc.dfs.core.windows.net/"
+		"parameters": {
+			"StorageAccount": {
+				"type": "string"
+			}
 		},
+		"annotations": [],
 		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "@{concat('https://',linkedService().StorageAccount,'.dfs.core.windows.net')}"
+		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
 			"type": "IntegrationRuntimeReference"
-		},
-		"annotations": []
-	}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/linkedservices"
 }
