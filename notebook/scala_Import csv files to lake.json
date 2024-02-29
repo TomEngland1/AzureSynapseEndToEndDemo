@@ -4,21 +4,21 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "synasp1",
+			"referenceName": "test",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "56g",
-			"driverCores": 8,
-			"executorMemory": "56g",
-			"executorCores": 8,
-			"numExecutors": 2,
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 1,
 			"runAsWorkspaceSystemIdentity": false,
 			"conf": {
-				"spark.dynamicAllocation.enabled": "false",
-				"spark.dynamicAllocation.minExecutors": "2",
-				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9a18ccc4-9d24-4034-9a14-6bfc96f578bc"
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "1",
+				"spark.dynamicAllocation.maxExecutors": "4",
+				"spark.autotune.trackingId": "68b71f72-8d25-4a91-9315-215bb9204ed6"
 			}
 		},
 		"metadata": {
@@ -32,12 +32,19 @@
 				"name": "scala"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/8c446569-e418-4625-9c82-5fe80d7a0993/resourceGroups/rg-synapse-uks/providers/Microsoft.Synapse/workspaces/scdpocws1/bigDataPools/synasp1",
-				"name": "synasp1",
+				"id": "/subscriptions/8c446569-e418-4625-9c82-5fe80d7a0993/resourceGroups/rg-synapse-demo-uks/providers/Microsoft.Synapse/workspaces/ws-synapse-demo-uks/bigDataPools/test",
+				"name": "test",
+				"type": "Spark",
+				"endpoint": "https://ws-synapse-demo-uks.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/test",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
-				}
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": true
 			},
 			"sessionKeepAliveTimeout": 30
 		},
