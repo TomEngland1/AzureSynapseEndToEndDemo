@@ -1,10 +1,16 @@
 {
 	"name": "AzureDataLakeStorage1",
 	"properties": {
+		"parameters": {
+			"StorageAccount": {
+				"type": "string",
+				"defaultValue": "datalakesynapsedemouks"
+			}
+		},
 		"annotations": [],
 		"type": "AzureBlobFS",
 		"typeProperties": {
-			"url": "https://datalakesynapsedemouks.dfs.core.windows.net"
+			"url": "@{concat('https://',linkedService().StorageAccount,'datalakesynapsedemouks.dfs.core.windows.net')}"
 		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
