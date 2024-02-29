@@ -1,0 +1,125 @@
+{
+	"name": "Landing zone to lake grandparent",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlPoolSource",
+						"sqlReaderStoredProcedureName": "[mgmt].[usp_GetActivePayloads]",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "SqlPool",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"state": "Active",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Landing zone to lake parent",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"DatasetName": {
+										"value": "@item().PayloadAcronym",
+										"type": "Expression"
+									},
+									"LakeFolder": {
+										"value": "@pipeline().parameters.LakeFolder",
+										"type": "Expression"
+									},
+									"LandingZone": {
+										"value": "@pipeline().parameters.LandingZone",
+										"type": "Expression"
+									},
+									"Container": {
+										"value": "@pipeline().parameters.Container",
+										"type": "Expression"
+									},
+									"PayloadID": {
+										"value": "@item().ID",
+										"type": "Expression"
+									},
+									"PayloadFileType": {
+										"value": "@item().PayloadFileType",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"LakeFolder": {
+				"type": "string",
+				"defaultValue": "raw"
+			},
+			"LandingZone": {
+				"type": "string",
+				"defaultValue": "landing-zone"
+			},
+			"Container": {
+				"type": "string",
+				"defaultValue": "dlsscdpocfs1"
+			}
+		},
+		"folder": {
+			"name": "Landing zone to data lake"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-22T13:03:03Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

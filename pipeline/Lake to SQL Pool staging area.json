@@ -1,0 +1,481 @@
+{
+	"name": "Lake to SQL Pool staging area",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlPoolSource",
+						"sqlReaderStoredProcedureName": "mgmt.usp_GetRawFiles",
+						"storedProcedureParameters": {
+							"ETLStatus": {
+								"type": "Int32",
+								"value": "0"
+							},
+							"MetadataLoaded": {
+								"type": "Boolean",
+								"value": {
+									"value": "@coalesce(true)",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "SqlPool",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@coalesce(null)",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Switch1",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@concat(pipeline().parameters.CopyMechanism,'-',item().PayloadFileType)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "CopyTask-csv",
+										"activities": [
+											{
+												"name": "Copy data1",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "AzureBlobFSReadSettings",
+															"recursive": true,
+															"wildcardFolderPath": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"wildcardFileName": "*.csv",
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "SqlPoolSink",
+														"allowCopyCommand": true,
+														"tableOption": "autoCreate"
+													},
+													"enableStaging": true,
+													"stagingSettings": {
+														"linkedServiceName": {
+															"referenceName": "AzureDataLakeStorage1",
+															"type": "LinkedServiceReference"
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DelimitedText1",
+														"type": "DatasetReference",
+														"parameters": {
+															"container": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"directory": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"filename": {
+																"value": "@coalesce(null)",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "SqlPool",
+														"type": "DatasetReference",
+														"parameters": {
+															"schema": "dbo",
+															"table": {
+																"value": "@replace(item().LakePath,'/','')",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									},
+									{
+										"value": "Notebook-csv",
+										"activities": [
+											{
+												"name": "Notebook1",
+												"type": "SynapseNotebook",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"notebook": {
+														"referenceName": "python_Import csv files to lake",
+														"type": "NotebookReference"
+													},
+													"parameters": {
+														"container_name": {
+															"value": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"storage_account": {
+															"value": {
+																"value": "@pipeline().parameters.StorageAccount",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"lake_path": {
+															"value": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"sql_server": {
+															"value": {
+																"value": "@pipeline().parameters.Server",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"schema": {
+															"value": {
+																"value": "@pipeline().parameters.StagingSchema",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"staging_table": {
+															"value": {
+																"value": "@replace(item().LakePath,'/','')",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"file_type": {
+															"value": {
+																"value": "@item().PayloadFileType",
+																"type": "Expression"
+															},
+															"type": "string"
+														}
+													},
+													"snapshot": true,
+													"sparkPool": {
+														"referenceName": "test",
+														"type": "BigDataPoolReference"
+													},
+													"executorSize": "Small",
+													"conf": {
+														"spark.dynamicAllocation.enabled": false
+													},
+													"driverSize": "Small"
+												}
+											}
+										]
+									},
+									{
+										"value": "CopyTask-parquet",
+										"activities": [
+											{
+												"name": "Copy data2",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "ParquetSource",
+														"storeSettings": {
+															"type": "AzureBlobFSReadSettings",
+															"recursive": true,
+															"wildcardFolderPath": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"wildcardFileName": "*.parquet",
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "ParquetReadSettings"
+														}
+													},
+													"sink": {
+														"type": "SqlPoolSink",
+														"allowCopyCommand": true,
+														"tableOption": "autoCreate"
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "Parquet1",
+														"type": "DatasetReference",
+														"parameters": {
+															"Container": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"Directory": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"Filename": {
+																"value": "@coalesce(null)",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "SqlPool",
+														"type": "DatasetReference",
+														"parameters": {
+															"schema": {
+																"value": "@pipeline().parameters.StagingSchema",
+																"type": "Expression"
+															},
+															"table": {
+																"value": "@replace(item().LakePath,'/','')",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									},
+									{
+										"value": "Notebook-parquet",
+										"activities": [
+											{
+												"name": "Notebook1_copy1",
+												"type": "SynapseNotebook",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"notebook": {
+														"referenceName": "python_Import csv files to lake",
+														"type": "NotebookReference"
+													},
+													"parameters": {
+														"container_name": {
+															"value": {
+																"value": "@pipeline().parameters.Container",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"storage_account": {
+															"value": {
+																"value": "@pipeline().parameters.StorageAccount",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"lake_path": {
+															"value": {
+																"value": "@item().LakePath",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"sql_server": {
+															"value": {
+																"value": "@pipeline().parameters.Server",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"schema": {
+															"value": {
+																"value": "@pipeline().parameters.StagingSchema",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"staging_table": {
+															"value": {
+																"value": "@replace(item().LakePath,'/','')",
+																"type": "Expression"
+															},
+															"type": "string"
+														},
+														"file_type": {
+															"value": {
+																"value": "@item().PayloadFileType",
+																"type": "Expression"
+															},
+															"type": "string"
+														}
+													},
+													"snapshot": true,
+													"sparkPool": {
+														"referenceName": "test",
+														"type": "BigDataPoolReference"
+													},
+													"executorSize": "Small",
+													"conf": {
+														"spark.dynamicAllocation.enabled": false
+													},
+													"driverSize": "Small"
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "SQL pool stored procedure",
+							"type": "SqlPoolStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Switch1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"sqlPool": {
+								"referenceName": "synapsedemodw",
+								"type": "SqlPoolReference"
+							},
+							"typeProperties": {
+								"storedProcedureName": "mgmt.usp_LogFileLoaded",
+								"storedProcedureParameters": {
+									"ID": {
+										"value": {
+											"value": "@item().ID",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"Container": {
+				"type": "string",
+				"defaultValue": "dlsscdpocfs1"
+			},
+			"CopyMechanism": {
+				"type": "string",
+				"defaultValue": "Notebook"
+			},
+			"StorageAccount": {
+				"type": "string",
+				"defaultValue": "dlsscdpoc"
+			},
+			"Server": {
+				"type": "string",
+				"defaultValue": "scdpocws1"
+			},
+			"StagingSchema": {
+				"type": "string",
+				"defaultValue": "dbo"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-22T13:02:47Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}
