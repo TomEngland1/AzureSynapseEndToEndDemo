@@ -3,13 +3,14 @@
 	"properties": {
 		"parameters": {
 			"DBName": {
-				"type": "String"
+				"type": "String",
+				"defaultValue": "synapsedemodw"
 			}
 		},
 		"annotations": [],
 		"type": "AzureSqlDW",
 		"typeProperties": {
-			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synapsedemodw.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:ws-synapse-demo-uks.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
